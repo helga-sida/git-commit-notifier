@@ -96,36 +96,36 @@ describe GitCommitNotifier::Git do
     end
 
     it "should return hooks.emailprefix if it's not empty" do
-      expected = "name of repo"
+      expected = "name of repo with parent"
       mock(GitCommitNotifier::Git).from_shell("git config hooks.emailprefix") { expected }
       dont_allow(Dir).pwd
-      GitCommitNotifier::Git.repo_name.should == expected
+      GitCommitNotifier::Git.repo_name_with_parent.should == expected
     end
 
     it "should return folder name with parent if no emailprefix and directory not ended with .git" do
       mock(GitCommitNotifier::Git).from_shell("git config hooks.emailprefix") { " " }
       stub(GitCommitNotifier::Git).toplevel_dir { "/home/someuser/repositories/root/myrepo" }
-      GitCommitNotifier::Git.repo_name.should == "root/myrepo"
+      GitCommitNotifier::Git.repo_name_with_parent.should == "root/myrepo"
     end
 
     it "should return folder name with parent without extension if no emailprefix and directory ended with .git" do
       mock(GitCommitNotifier::Git).from_shell("git config hooks.emailprefix") { " " }
       stub(GitCommitNotifier::Git).toplevel_dir { "/home/someuser/repositories/root/myrepo.git" }
-      GitCommitNotifier::Git.repo_name.should == "root/myrepo"
+      GitCommitNotifier::Git.repo_name_with_parent.should == "root/myrepo"
     end
 
     it "should return folder name with parent if no emailprefix and toplevel dir and directory not ended with .git" do
       mock(GitCommitNotifier::Git).from_shell("git config hooks.emailprefix") { " " }
       stub(GitCommitNotifier::Git).toplevel_dir { "" }
       stub(GitCommitNotifier::Git).git_dir { "/home/someuser/repositories/root/myrepo.git" }
-      GitCommitNotifier::Git.repo_name.should == "root/myrepo"
+      GitCommitNotifier::Git.repo_name_with_parent.should == "root/myrepo"
     end
 
 	it "should return just folder name if no emailprefix and single toplevel dir and directory not ended with .git" do
       mock(GitCommitNotifier::Git).from_shell("git config hooks.emailprefix") { " " }
       stub(GitCommitNotifier::Git).toplevel_dir { "" }
       stub(GitCommitNotifier::Git).git_dir { "/myrepo.git" }
-      GitCommitNotifier::Git.repo_name.should == "myrepo"
+      GitCommitNotifier::Git.repo_name_with_parent.should == "myrepo"
     end
 
   end
