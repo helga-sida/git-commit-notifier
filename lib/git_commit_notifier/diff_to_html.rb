@@ -336,6 +336,7 @@ module GitCommitNotifier
       @binary = false
     end
 
+    RE_DIFF_FILE_NAME_ESCAPED = /^diff --git "a\/(.*)" "?b\//
     RE_DIFF_FILE_NAME = /^diff\s\-\-git\sa\/(.*)\sb\//
     RE_DIFF_SHA       = /^index [0-9a-fA-F]+\.\.([0-9a-fA-F]+)/
 
@@ -365,6 +366,10 @@ module GitCommitNotifier
         case line
         when RE_DIFF_FILE_NAME then
           file_name = $1
+          add_changes_to_result
+          @current_file_name = file_name
+        when RE_DIFF_FILE_NAME_ESCAPED then
+          file_name = decode_escaped_filename( $1 )
           add_changes_to_result
           @current_file_name = file_name
         when RE_DIFF_SHA then
