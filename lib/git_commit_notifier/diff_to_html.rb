@@ -602,8 +602,8 @@ module GitCommitNotifier
     end
 
     def extract_link(a_tag)
-      return nil  unless a_tag =~ /href\s*=\s*"([^"]+)"/
-      $1
+      m = /href\s*=\s*"([^"]+)"/i.match(a_tag)
+      m && m[1]
     end
 
     def diff_for_commit(commit)
