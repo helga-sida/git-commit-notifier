@@ -602,7 +602,7 @@ module GitCommitNotifier
     end
 
     def extract_link(a_tag)
-      m = /href\s*=\s*"([^"]+)"/i.match(a_tag)
+      m = /href\s*=\s*["']([^"']+)["']/i.match(a_tag)
       m && m[1]
     end
 
