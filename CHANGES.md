@@ -5,6 +5,9 @@
 ## Version 0.12.10
 
 * Commit metalinks in emails.
+* Show changed filenames with non-ascii characters.
+* Support for Trac with multiple repositories.
+* Support for Stash.
 
 ## Version 0.12.5-0.12.6
 
