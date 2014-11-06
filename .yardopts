@@ -2,7 +2,6 @@
 --markup-provider redcarpet
 --charset utf-8
 --readme README.md
---plugin redcarpet-ext
 -
 README.md
 LICENSE

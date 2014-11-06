@@ -39,9 +39,9 @@ describe GitCommitNotifier::DiffToHtml do
       diff.result.should have(1).commits # one result for each of the commits
 
       diff.result.each do |html|
-        html.should_not be_include('@@') # diff correctly processed
+        html.should_not include('@@') # diff correctly processed
       end
- 
+
       expect(diff.generate_file_link("x/file1.html")).to \
         eq("<a href='http://example.com/projects/TEST/repos/TESTREPO/browse/x/file1.html?at=a4629e707d80a5769f7a71ca6ed9471015e14dc9'>x/file1.html</a>")
     end
@@ -146,7 +146,7 @@ describe GitCommitNotifier::DiffToHtml do
     diff.result.should have(5).commits # one result for each of the commits
 
     diff.result.each do |html|
-      html.should_not be_include('@@') # diff correctly processed
+      html.should_not include('@@') # diff correctly processed
     end
 
     # second commit - 51b986619d88f7ba98be7d271188785cbbb541a0
@@ -155,7 +155,7 @@ describe GitCommitNotifier::DiffToHtml do
     (hp/"table"/"tr"/"td").each do |td|
       if td.inner_html =~ /create_btn/
         cols = td.parent.search('td')
-        ['405', '408', ''].should be_include(cols[0].inner_text) # line 405 changed
+        ['405', '408', ''].should include(cols[0].inner_text) # line 405 changed
       end
     end
 
@@ -247,22 +247,22 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should be false unless skip_commits_older_than set" do
-      @diff_to_html.old_commit?(Hash.new).should be_false
+      @diff_to_html.old_commit?(Hash.new).should be false
     end
 
     it "should be false if skip_commits_older_than less than zero" do
       @config['skip_commits_older_than'] = '-7'
-      @diff_to_html.old_commit?(Hash.new).should be_false
+      @diff_to_html.old_commit?(Hash.new).should be false
     end
 
     it "should be false if skip_commits_older_than is equal to zero" do
       @config['skip_commits_older_than'] = 0
-      @diff_to_html.old_commit?(Hash.new).should be_false
+      @diff_to_html.old_commit?(Hash.new).should be false
     end
 
     it "should be false if commit is newer than required by skip_commits_older_than" do
       @config['skip_commits_older_than'] = 1
-      @diff_to_html.old_commit?({:date => (Time.now - 1).to_s}).should be_false
+      @diff_to_html.old_commit?({:date => (Time.now - 1).to_s}).should be false
     end
 
     it "should be true if commit is older than required by skip_commits_older_than" do

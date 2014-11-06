@@ -13,13 +13,13 @@ describe GitCommitNotifier::ResultProcessor do
     removal, addition = processor.results
     removal.should have(1).line
 
-    removal.first.should be_include('&nbsp;&nbsp;<span class="rr">b</span>')
-    removal.first.should be_include('<span class="rr">ton</span>')
+    removal.first.should include('&nbsp;&nbsp;<span class="rr">b</span>')
+    removal.first.should include('<span class="rr">ton</span>')
     removal.first.split('<span>').should have(1).span # one occurrence (beginning of string)
 
     addition.should have(1).line
-    addition.first.should be_include('&nbsp;&nbsp;<span class="aa">s</span>')
-    addition.first.should be_include('<span class="aa">bmi</span>')
+    addition.first.should include('&nbsp;&nbsp;<span class="aa">s</span>')
+    addition.first.should include('<span class="aa">bmi</span>')
     addition.first.split('<span>').should have(1).span # one occurrence (beginning of string)
   end
 
@@ -61,10 +61,10 @@ describe GitCommitNotifier::ResultProcessor do
     removal, addition = processor.results
 
     removal.should have(1).line
-    removal.first.should be_include('action&nbsp;=&gt;<span class="rr">cre</span>')
+    removal.first.should include('action&nbsp;=&gt;<span class="rr">cre</span>')
 
     addition.should have(1).line
-    addition.first.should be_include('action&nbsp;=&gt;<span class="aa">sub</span>')
+    addition.first.should include('action&nbsp;=&gt;<span class="aa">sub</span>')
   end
 
   def create_test_input
