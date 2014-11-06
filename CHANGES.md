@@ -2,7 +2,7 @@
 
 ## Not yet released
 
-## Version 0.12.9
+## Version 0.12.10
 
 * Commit metalinks in emails.
 
