@@ -66,7 +66,7 @@ describe GitCommitNotifier::CommitHook do
     # 1 commit with a from: adress
     expect_repository_access
     emailer = mock!.send.subject
-    mock(GitCommitNotifier::Emailer).new(anything, hash_including(:from_address => "max@example.com")) { emailer }
+    double(GitCommitNotifier::Emailer).new(anything, hash_including(:from_address => "max@example.com")) { emailer }
 
     GitCommitNotifier::CommitHook.run 'spec/fixtures/git-notifier-group-email-by-push.yml', REVISIONS.first, REVISIONS.last, 'refs/heads/master'
    end
@@ -87,7 +87,7 @@ describe GitCommitNotifier::CommitHook do
   describe :logger do
     it "should be instance of logger" do
       stub(GitCommitNotifier::CommitHook).config { {} }
-      GitCommitNotifier::CommitHook.logger.should be_kind_of(GitCommitNotifier::Logger)
+      expect(GitCommitNotifier::CommitHook.logger).to be_kind_of(GitCommitNotifier::Logger)
     end
   end
 
@@ -121,30 +121,30 @@ describe GitCommitNotifier::CommitHook do
   describe :include_branches do
     it "should be nil if not specified in config" do
       mock(GitCommitNotifier::CommitHook).config { Hash.new }
-      GitCommitNotifier::CommitHook.include_branches.should be_nil
+      expect(GitCommitNotifier::CommitHook.include_branches).to be_nil
     end
     it "should be single item array if one branch as string specified" do
       mock(GitCommitNotifier::CommitHook).config { { 'include_branches' => 'staging' } }
-      GitCommitNotifier::CommitHook.include_branches.should == %w( staging )
+      expect(GitCommitNotifier::CommitHook.include_branches).to eq(%w( staging ))
     end
     it "should be array if specified as array" do
       mock(GitCommitNotifier::CommitHook).config { { 'include_branches' => %w(test staging gotcha)  } }
-      GitCommitNotifier::CommitHook.include_branches.should == %w(test staging gotcha)
+      expect(GitCommitNotifier::CommitHook.include_branches).to eq(%w(test staging gotcha))
     end
     it "should be array of items, splitted by comma if specified as comma-separated list string" do
       mock(GitCommitNotifier::CommitHook).config { { 'include_branches' => 'test, me, yourself'  } }
-      GitCommitNotifier::CommitHook.include_branches.should == %w(test me yourself)
+      expect(GitCommitNotifier::CommitHook.include_branches).to eq(%w(test me yourself))
     end
   end
 
   describe :get_subject do
     it "should run lambda if specified in mapping" do
       mock(GitCommitNotifier::Git).describe("commit_id") { "yo" }
-      GitCommitNotifier::CommitHook.get_subject(
+      expect(GitCommitNotifier::CommitHook.get_subject(
         { :commit => "commit_id" },
         "${description}",
         { :description => lambda { |commit_info| GitCommitNotifier::Git.describe(commit_info[:commit]) } }
-      ).should == "yo"
+      )).to eq("yo")
     end
   end
 

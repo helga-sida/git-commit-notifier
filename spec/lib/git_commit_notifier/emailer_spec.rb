@@ -7,13 +7,13 @@ require 'git_commit_notifier'
 describe GitCommitNotifier::Emailer do
   describe :new do
     it "should assign config if given" do
-      GitCommitNotifier::Emailer.new({:a => :b}).config[:a].should == :b
+      expect(GitCommitNotifier::Emailer.new({:a => :b}).config[:a]).to eq(:b)
     end
 
     it "should use empty hash unless config given" do
       cfg = GitCommitNotifier::Emailer.new(false).config
-      cfg.should be_kind_of(Hash)
-      cfg.should be_empty
+      expect(cfg).to be_kind_of(Hash)
+      expect(cfg).to be_empty
     end
 
     it "should assign parameters from options" do
@@ -23,7 +23,7 @@ describe GitCommitNotifier::Emailer do
       end
       emailer = GitCommitNotifier::Emailer.new({}, options)
       options.each_pair do |key, value|
-        emailer.instance_variable_get("@#{key}").should == value
+        expect(emailer.instance_variable_get("@#{key}")).to eq(value)
       end
     end
   end
@@ -36,14 +36,14 @@ describe GitCommitNotifier::Emailer do
     it "should return default stylesheet if custom is not provided" do
       emailer = GitCommitNotifier::Emailer.new({})
       mock(IO).read(GitCommitNotifier::Emailer::DEFAULT_STYLESHEET_PATH) { 'ok' }
-      emailer.stylesheet_string.should == 'ok'
+      expect(emailer.stylesheet_string).to eq('ok')
     end
 
     it "should return custom stylesheet if custom is provided" do
       emailer = GitCommitNotifier::Emailer.new({'stylesheet' => '/path/to/custom/stylesheet'})
       mock(IO).read('/path/to/custom/stylesheet') { 'ok' }
       dont_allow(IO).read(GitCommitNotifier::Emailer::DEFAULT_STYLESHEET_PATH)
-      emailer.stylesheet_string.should == 'ok'
+      expect(emailer.stylesheet_string).to eq('ok')
     end
   end
 
@@ -54,7 +54,7 @@ describe GitCommitNotifier::Emailer do
         options[name.to_sym] = Faker::Lorem.sentence
       end
       emailer = GitCommitNotifier::Emailer.new({}, options)
-      emailer.mail_html_message.should match(/html/)
+      expect(emailer.mail_html_message).to match(/html/)
     end
   end
 
@@ -65,7 +65,7 @@ describe GitCommitNotifier::Emailer do
     end
 
     it "should respond to result" do
-      GitCommitNotifier::Emailer.template.should respond_to(:result)
+      expect(GitCommitNotifier::Emailer.template).to respond_to(:result)
     end
 
     it "should return Erubis template if Erubis installed" do
@@ -80,7 +80,7 @@ describe GitCommitNotifier::Emailer do
         end
       end
       mock.proxy(Erubis::Eruby).new('erb')
-      GitCommitNotifier::Emailer.template.should be_kind_of(Erubis::Eruby)
+      expect(GitCommitNotifier::Emailer.template).to be_kind_of(Erubis::Eruby)
     end
 
     it "should return ERB template unless Erubis installed" do
@@ -89,7 +89,7 @@ describe GitCommitNotifier::Emailer do
       mock(GitCommitNotifier::Emailer).require('erb')
       mock.proxy(ERB).new('erb')
 
-      GitCommitNotifier::Emailer.template.should be_kind_of(ERB)
+      expect(GitCommitNotifier::Emailer.template).to be_kind_of(ERB)
     end
   end
 
@@ -98,13 +98,13 @@ describe GitCommitNotifier::Emailer do
       emailer = GitCommitNotifier::Emailer.new({'custom_template' => '/path/to/custom/template'})
       mock(IO).read('/path/to/custom/template') { 'custom templated text' }
       dont_allow(IO).read(GitCommitNotifier::Emailer::TEMPLATE)
-      GitCommitNotifier::Emailer.template_source.should == 'custom templated text'
+      expect(GitCommitNotifier::Emailer.template_source).to eq('custom templated text')
     end
 
     it "should return the default template if custom_template is not provided" do
       emailer = GitCommitNotifier::Emailer.new({})
       mock(IO).read(GitCommitNotifier::Emailer::TEMPLATE) { 'default templated text' }
-      GitCommitNotifier::Emailer.template_source.should == 'default templated text'
+      expect(GitCommitNotifier::Emailer.template_source).to eq('default templated text')
     end
   end
 end
