@@ -21,7 +21,7 @@ A reply-to header is added containing the author of the commit. This makes
 follow up really simple. If multiple commits are pushed at once, emails are
 numbered in chronological order:
 
-    [rails][branch][0] Added deprecated warning messages to Float#months and Float#years deprications.
+    [rails][branch][0] Added deprecated warning messages to Float#months and Float#years deprecations.
     [rails][branch][1] Enhance testing for fractional days and weeks. Update changelog.
 
 Example email:
@@ -82,10 +82,10 @@ Git-commit-notifier supports easy integration with Redmine, Bugzilla and MediaWi
 
 ## Github-flavored Webhooks
 
-Git-commit-notifier can send a webhook just after sending a mail, This webook will be sent in a POST request to a server specified in the configuration (webhook / url), under JSON format following the same syntax as Github webhooks.
+Git-commit-notifier can send a webhook just after sending a mail. This webhook will be sent in a POST request to a server specified in the configuration (webhook / url), under JSON format following the same syntax as Github webhooks.
 
-* [Cogbot](https://github.com/mose/cogbot) is the irc bot for which that feature was originaly designed for. Only a subset of the Github json file was required for that one so maybe it won't work on all Github webhook recievers.
-* [Github webhooks](https://help.github.com/articles/post-receive-hooks) describes the json format expected and some hints on how to design a webhook reciever.  Be sure to extract the 'ref' from the json.  An example Sinatra server to use git-commit-notifier might look like:
+* [Cogbot](https://github.com/mose/cogbot) is the irc bot for which that feature was originally designed. Only a subset of the Github json file was required for that one so maybe it won't work on all Github webhook receivers.
+* [Github webhooks](https://help.github.com/articles/post-receive-hooks) describes the json format expected and some hints on how to design a webhook receiver.  Be sure to extract the 'ref' from the json.  An example Sinatra server to use git-commit-notifier might look like:
 
 ```ruby
 require 'rubygems'
