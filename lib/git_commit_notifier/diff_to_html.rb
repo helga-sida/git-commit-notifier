@@ -242,11 +242,11 @@ module GitCommitNotifier
         elsif config["link_files"] == "cgit" && config["cgit"]
           "<a href='#{config['cgit']['path']}/#{config['cgit']['project'] || "#{Git.repo_name_real}"}/tree/#{file_name}?h=#{branch_name}'>#{file_name}</a>"
         elsif config["link_files"] == "gitlabhq" && config["gitlabhq"]
-          if config["gitlabhq"]["version"] && config["gitlabhq"]["version"] < 1.2
+          if config["gitlabhq"]["version"] && config["gitlabhq"]["version"].to_f < 1.2
             "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name.gsub(".", "_")}/tree/#{@current_commit}/#{file_name}'>#{file_name}</a>"
-          elsif config["gitlabhq"]["version"] && config["gitlabhq"]["version"] >= 5.0
+          elsif config["gitlabhq"]["version"] && config["gitlabhq"]["version"].to_f >= 5.0
             "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name_with_parent.gsub(".", "_")}/blob/#{@current_commit}/#{file_name}'>#{file_name}</a>"
-          elsif config["gitlabhq"]["version"] && config["gitlabhq"]["version"] >= 4.0
+          elsif config["gitlabhq"]["version"] && config["gitlabhq"]["version"].to_f >= 4.0
             "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name_with_parent.gsub(".", "_")}/commit/#{@current_commit}'>#{file_name}</a>"
           else
             "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name.gsub(".", "_")}/#{@current_commit}/tree/#{file_name}'>#{file_name}</a>"
@@ -576,9 +576,9 @@ module GitCommitNotifier
       },
       :cgit      => lambda { |config, commit| "<a href='#{config['cgit']['path']}/#{config['cgit']['project'] || "#{Git.repo_name_real}"}/commit/?id=#{commit}'>#{commit}</a>" },
       :gitlabhq  => lambda { |config, commit|
-        if config['gitlabhq']['version'] >= 5.0
+        if config['gitlabhq']['version'] && config['gitlabhq']['version'].to_f >= 5.0
           "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name_with_parent.gsub(".", "_")}/commit/#{commit}'>#{commit}</a>"
-        elsif config['gitlabhq']['version'] >= 4.0
+        elsif config['gitlabhq']['version'] && config['gitlabhq']['version'].to_f >= 4.0
           "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name_with_parent.gsub(".", "_")}/commits/#{commit}'>#{commit}</a>"
         else
           "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name.gsub(".", "_")}/commits/#{commit}'>#{commit}</a>"
