@@ -221,6 +221,13 @@ class GitCommitNotifier::Emailer
     date = @offset_date     # Date notifier started, plus 1 second per commit processed
     date = Time.new.rfc2822 if date.nil?    # Fallback to current date if date is nil
 
+    # Check if the recepients are set to be sent via Bcc and set the To to the commit
+    # author
+    if config['bcc_recepients'] && config['delivery_method'] != 'nntp'
+      content << "To: #{from}"
+      to_tag = 'Bcc'
+    end
+
     content.concat [
         "#{to_tag}: #{quote_if_necessary(@recipient, 'utf-8')}",
         "Date: #{date}",
