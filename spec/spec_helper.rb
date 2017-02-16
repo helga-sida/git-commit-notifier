@@ -1,20 +1,14 @@
 # -*- coding: utf-8; mode: ruby; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- vim:fenc=utf-8:filetype=ruby:et:sw=2:ts=2:sts=2
 
-if RUBY_VERSION < '1.9'
-  # This is for Unicode support in Ruby 1.8
-  $KCODE = 'u';
-  require 'jcode'
-end
+Encoding.default_external = "utf-8"
+Encoding.default_internal = "utf-8"
 
-if RUBY_VERSION >= '1.9'
-  Encoding.default_external = "utf-8"
-  Encoding.default_internal = "utf-8"
-
+begin
   require 'coveralls'
   Coveralls.wear!
+rescue
 end
 
-require 'rubygems'
 require 'faker'
 require 'rspec/core'
 
@@ -31,4 +25,3 @@ unless defined? REVISIONS
 
   FIXTURES_PATH = (File.dirname(__FILE__) + '/fixtures/').freeze
 end
-
