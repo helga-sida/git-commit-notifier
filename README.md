@@ -32,11 +32,8 @@ __by Bodo Tasche (bodo 'at' wannawork 'dot' de), Akzhan Abdulin (akzhan 'dot' ab
 
 ## Requirements
 
-* Ruby 1.8.7 or higher.
-* RubyGems.
+* Ruby 2.0.0 or higher.
 * libxml2 and libxslt with headers (see [nokogiri installation notes](http://nokogiri.org/tutorials/installing_nokogiri.html) for details).
-
-We do not support ruby 1.8.6 because of nokogiri gem requirements.
 
 ## Installing and Configuring
 
