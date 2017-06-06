@@ -52,7 +52,7 @@ module GitCommitNotifier
         end
       end
 
-      def get_reply_to_address(config, committer_email)
+      def get_reply_to_address(config, committer_email, recipient)
         reply_to_address = config["from"]
         if config["reply_to_author"]
           reply_to_address = committer_email
@@ -227,7 +227,7 @@ module GitCommitNotifier
             :recipient => config["send_mail_to_committer"] ? add_committer_to_recipient(recipient, result[:commit_info][:email]) : recipient,
             :from_address => config["from"] || result[:commit_info][:email],
             :from_alias => result[:commit_info][:author],
-            :reply_to_address => get_reply_to_address(config, result[:commit_info][:email]),
+            :reply_to_address => get_reply_to_address(config, result[:commit_info][:email], recipient),
             :subject => subject,
             :commit_date => result[:commit_info][:date],
             :current_date => Time.new.rfc2822,
@@ -278,7 +278,7 @@ module GitCommitNotifier
               :recipient => config["send_mail_to_committer"] ? add_committer_to_recipient(recipient, result[:commit_info][:email]) : recipient,
               :from_address => config["from"] || result[:commit_info][:email],
               :from_alias => result[:commit_info][:author],
-              :reply_to_address => get_reply_to_address(config, result[:commit_info][:email]),
+              :reply_to_address => get_reply_to_address(config, result[:commit_info][:email], recipient),
               :subject => subject,
               :commit_date => result[:commit_info][:date],
               :current_date => Time.new.rfc2822,
