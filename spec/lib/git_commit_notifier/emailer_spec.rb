@@ -35,13 +35,13 @@ describe GitCommitNotifier::Emailer do
 
     it "should return default stylesheet if custom is not provided" do
       emailer = GitCommitNotifier::Emailer.new({})
-      mock(IO).read(GitCommitNotifier::Emailer::DEFAULT_STYLESHEET_PATH) { 'ok' }
+      double(IO).read(GitCommitNotifier::Emailer::DEFAULT_STYLESHEET_PATH) { 'ok' }
       expect(emailer.stylesheet_string).to eq('ok')
     end
 
     it "should return custom stylesheet if custom is provided" do
       emailer = GitCommitNotifier::Emailer.new({'stylesheet' => '/path/to/custom/stylesheet'})
-      mock(IO).read('/path/to/custom/stylesheet') { 'ok' }
+      double(IO).read('/path/to/custom/stylesheet') { 'ok' }
       dont_allow(IO).read(GitCommitNotifier::Emailer::DEFAULT_STYLESHEET_PATH)
       expect(emailer.stylesheet_string).to eq('ok')
     end
@@ -61,7 +61,7 @@ describe GitCommitNotifier::Emailer do
   describe :template do
     before(:each) do
       GitCommitNotifier::Emailer.reset_template
-      mock(IO).read(GitCommitNotifier::Emailer::TEMPLATE) { 'erb' }
+      double(IO).read(GitCommitNotifier::Emailer::TEMPLATE) { 'erb' }
     end
 
     it "should respond to result" do
@@ -69,7 +69,7 @@ describe GitCommitNotifier::Emailer do
     end
 
     it "should return Erubis template if Erubis installed" do
-      mock(GitCommitNotifier::Emailer).require('erubis')
+      double(GitCommitNotifier::Emailer).require('erubis')
       dont_allow(GitCommitNotifier::Emailer).require('erb')
       unless defined?(Erubis)
         module Erubis
@@ -79,15 +79,15 @@ describe GitCommitNotifier::Emailer do
           end
         end
       end
-      mock.proxy(Erubis::Eruby).new('erb')
+      double.proxy(Erubis::Eruby).new('erb')
       expect(GitCommitNotifier::Emailer.template).to be_kind_of(Erubis::Eruby)
     end
 
     it "should return ERB template unless Erubis installed" do
       require 'erb'
-      mock(GitCommitNotifier::Emailer).require('erubis') { raise LoadError.new('erubis') }
-      mock(GitCommitNotifier::Emailer).require('erb')
-      mock.proxy(ERB).new('erb')
+      double(GitCommitNotifier::Emailer).require('erubis') { raise LoadError.new('erubis') }
+      double(GitCommitNotifier::Emailer).require('erb')
+      double.proxy(ERB).new('erb')
 
       expect(GitCommitNotifier::Emailer.template).to be_kind_of(ERB)
     end
@@ -96,14 +96,14 @@ describe GitCommitNotifier::Emailer do
   describe :template_source do
     it "should return custom template if custom is provided" do
       emailer = GitCommitNotifier::Emailer.new({'custom_template' => '/path/to/custom/template'})
-      mock(IO).read('/path/to/custom/template') { 'custom templated text' }
+      double(IO).read('/path/to/custom/template') { 'custom templated text' }
       dont_allow(IO).read(GitCommitNotifier::Emailer::TEMPLATE)
       expect(GitCommitNotifier::Emailer.template_source).to eq('custom templated text')
     end
 
     it "should return the default template if custom_template is not provided" do
       emailer = GitCommitNotifier::Emailer.new({})
-      mock(IO).read(GitCommitNotifier::Emailer::TEMPLATE) { 'default templated text' }
+      double(IO).read(GitCommitNotifier::Emailer::TEMPLATE) { 'default templated text' }
       expect(GitCommitNotifier::Emailer.template_source).to eq('default templated text')
     end
   end

@@ -43,7 +43,7 @@ describe GitCommitNotifier::Logger do
   describe :log_path do
     it "should be nil unless debug?" do
       logger = GitCommitNotifier::Logger.new({})
-      mock(logger).debug? { false }
+      double(logger).debug? { false }
       expect(logger.log_path).to be_nil
     end
 

@@ -41,8 +41,8 @@ describe GitCommitNotifier::CommitHook do
     expect_repository_access
 
     emailer = mock!.send.times(times).subject
-    mock(GitCommitNotifier::Emailer).new(anything, anything) { emailer }.times(times)
-    mock(GitCommitNotifier::CommitHook).info(/Sending mail/)
+    double(GitCommitNotifier::Emailer).new(anything, anything) { emailer }.times(times)
+    double(GitCommitNotifier::CommitHook).info(/Sending mail/)
 
     any_instance_of(GitCommitNotifier::DiffToHtml, :check_handled_commits => lambda { |commits| commits })
     GitCommitNotifier::CommitHook.run config, REVISIONS.first, REVISIONS.last, branch
@@ -50,13 +50,13 @@ describe GitCommitNotifier::CommitHook do
 
 
   def run_and_reject(config,times,branch)
-    mock(GitCommitNotifier::Git).mailing_list_address { 'recipient@test.com' }
-    mock(GitCommitNotifier::Git).repo_name { 'testproject' }
+    double(GitCommitNotifier::Git).mailing_list_address { 'recipient@test.com' }
+    double(GitCommitNotifier::Git).repo_name { 'testproject' }
 
     emailer = mock!.send.times(times).subject
-    mock(GitCommitNotifier::Emailer).new(anything, anything).times(times)
+    double(GitCommitNotifier::Emailer).new(anything, anything).times(times)
 
-    mock(GitCommitNotifier::CommitHook).info(/Supressing mail for branch/)
+    double(GitCommitNotifier::CommitHook).info(/Supressing mail for branch/)
 
     GitCommitNotifier::CommitHook.run config, REVISIONS.first, REVISIONS.last, branch
   end
@@ -72,74 +72,74 @@ describe GitCommitNotifier::CommitHook do
    end
 
   def expect_repository_access
-    mock(GitCommitNotifier::Git).rev_type(REVISIONS.first) { "commit" }
-    mock(GitCommitNotifier::Git).rev_type(REVISIONS.last) { "commit" }
-    mock(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { REVISIONS }
-    mock(GitCommitNotifier::Git).mailing_list_address { 'recipient@test.com' }
-    mock(GitCommitNotifier::Git).repo_name { 'testproject' }
-    mock(GitCommitNotifier::Git).changed_files('7e4f6b4', '4f13525') { [] }
+    double(GitCommitNotifier::Git).rev_type(REVISIONS.first) { "commit" }
+    double(GitCommitNotifier::Git).rev_type(REVISIONS.last) { "commit" }
+    double(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { REVISIONS }
+    double(GitCommitNotifier::Git).mailing_list_address { 'recipient@test.com' }
+    double(GitCommitNotifier::Git).repo_name { 'testproject' }
+    double(GitCommitNotifier::Git).changed_files('7e4f6b4', '4f13525') { [] }
     REVISIONS.each do |rev|
-      mock(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + "git_show_#{rev}") }
+      double(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + "git_show_#{rev}") }
       dont_allow(GitCommitNotifier::Git).describe(rev) { IO.read(FIXTURES_PATH + "git_describe_#{rev}") }
     end
   end
 
   describe :logger do
     it "should be instance of logger" do
-      stub(GitCommitNotifier::CommitHook).config { {} }
+      double(GitCommitNotifier::CommitHook).config { {} }
       expect(GitCommitNotifier::CommitHook.logger).to be_kind_of(GitCommitNotifier::Logger)
     end
   end
 
   describe :show_error do
     it "should write error to stderr" do
-      mock($stderr).puts("\n").times(2)
-      mock($stderr).puts(/GIT\sNOTIFIER\sPROBLEM/).times(2)
-      mock($stderr).puts('yes')
+      double($stderr).puts("\n").times(2)
+      double($stderr).puts(/GIT\sNOTIFIER\sPROBLEM/).times(2)
+      double($stderr).puts('yes')
       GitCommitNotifier::CommitHook.show_error('yes')
     end
   end
 
   describe :info do
     it "should write to and flush stdout" do
-      mock($stdout).puts('msg')
-      mock($stdout).flush
+      double($stdout).puts('msg')
+      double($stdout).flush
       GitCommitNotifier::CommitHook.info('msg')
     end
   end
 
   describe :run do
     it "should report informational message when no recipients specified" do
-      mock(File).exists?(:noconfig) { false }
-      mock(GitCommitNotifier::CommitHook).info(/Unable to find/)
-      mock(GitCommitNotifier::Git).mailing_list_address { nil }
-      mock(GitCommitNotifier::CommitHook).info(/recipient/)
+      double(File).exists?(:noconfig) { false }
+      double(GitCommitNotifier::CommitHook).info(/Unable to find/)
+      double(GitCommitNotifier::Git).mailing_list_address { nil }
+      double(GitCommitNotifier::CommitHook).info(/recipient/)
       GitCommitNotifier::CommitHook.run(:noconfig, :rev1, :rev2, 'master')
     end
   end
 
   describe :include_branches do
     it "should be nil if not specified in config" do
-      mock(GitCommitNotifier::CommitHook).config { Hash.new }
+      double(GitCommitNotifier::CommitHook).config { Hash.new }
       expect(GitCommitNotifier::CommitHook.include_branches).to be_nil
     end
     it "should be single item array if one branch as string specified" do
-      mock(GitCommitNotifier::CommitHook).config { { 'include_branches' => 'staging' } }
+      double(GitCommitNotifier::CommitHook).config { { 'include_branches' => 'staging' } }
       expect(GitCommitNotifier::CommitHook.include_branches).to eq(%w( staging ))
     end
     it "should be array if specified as array" do
-      mock(GitCommitNotifier::CommitHook).config { { 'include_branches' => %w(test staging gotcha)  } }
+      double(GitCommitNotifier::CommitHook).config { { 'include_branches' => %w(test staging gotcha)  } }
       expect(GitCommitNotifier::CommitHook.include_branches).to eq(%w(test staging gotcha))
     end
     it "should be array of items, splitted by comma if specified as comma-separated list string" do
-      mock(GitCommitNotifier::CommitHook).config { { 'include_branches' => 'test, me, yourself'  } }
+      double(GitCommitNotifier::CommitHook).config { { 'include_branches' => 'test, me, yourself'  } }
       expect(GitCommitNotifier::CommitHook.include_branches).to eq(%w(test me yourself))
     end
   end
 
   describe :get_subject do
     it "should run lambda if specified in mapping" do
-      mock(GitCommitNotifier::Git).describe("commit_id") { "yo" }
+      double(GitCommitNotifier::Git).describe("commit_id") { "yo" }
       expect(GitCommitNotifier::CommitHook.get_subject(
         { :commit => "commit_id" },
         "${description}",

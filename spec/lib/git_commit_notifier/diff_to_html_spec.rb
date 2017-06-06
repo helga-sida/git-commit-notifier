@@ -26,11 +26,11 @@ describe GitCommitNotifier::DiffToHtml do
                 "repository" => "TESTREPO"
               })
 
-      mock(GitCommitNotifier::Git).rev_type(REVISIONS[1]) { "commit" }
-      mock(GitCommitNotifier::Git).rev_type(REVISIONS[2]) { "commit" }
-      mock(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { [REVISIONS[1]] }
+      double(GitCommitNotifier::Git).rev_type(REVISIONS[1]) { "commit" }
+      double(GitCommitNotifier::Git).rev_type(REVISIONS[2]) { "commit" }
+      double(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { [REVISIONS[1]] }
       [REVISIONS[1]].each do |rev|
-        mock(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
+        double(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
         dont_allow(GitCommitNotifier::Git).describe(rev) { IO.read(FIXTURES_PATH + 'git_describe_' + rev) }
       end
 
@@ -131,12 +131,12 @@ describe GitCommitNotifier::DiffToHtml do
   end
 
   it "multiple commits" do
-    mock(GitCommitNotifier::Git).changed_files('7e4f6b4', '4f13525') { [] }
-    mock(GitCommitNotifier::Git).rev_type(REVISIONS.first) { "commit" }
-    mock(GitCommitNotifier::Git).rev_type(REVISIONS.last) { "commit" }
-    mock(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { REVISIONS.reverse }
+    double(GitCommitNotifier::Git).changed_files('7e4f6b4', '4f13525') { [] }
+    double(GitCommitNotifier::Git).rev_type(REVISIONS.first) { "commit" }
+    double(GitCommitNotifier::Git).rev_type(REVISIONS.last) { "commit" }
+    double(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { REVISIONS.reverse }
     REVISIONS.each do |rev|
-      mock(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
+      double(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
       dont_allow(GitCommitNotifier::Git).describe(rev) { IO.read(FIXTURES_PATH + 'git_describe_' + rev) }
     end
 
@@ -187,11 +187,11 @@ describe GitCommitNotifier::DiffToHtml do
 
   it "should get good diff when new branch created" do
     first_rev, last_rev = %w[ 0000000000000000000000000000000000000000 ff037a73fc1094455e7bbf506171a3f3cf873ae6 ]
-    mock(GitCommitNotifier::Git).rev_type(first_rev) { "commit" }
-    mock(GitCommitNotifier::Git).rev_type(last_rev) { "commit" }
-    mock(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { [ 'ff037a73fc1094455e7bbf506171a3f3cf873ae6' ] }
+    double(GitCommitNotifier::Git).rev_type(first_rev) { "commit" }
+    double(GitCommitNotifier::Git).rev_type(last_rev) { "commit" }
+    double(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { [ 'ff037a73fc1094455e7bbf506171a3f3cf873ae6' ] }
     %w[ ff037a73fc1094455e7bbf506171a3f3cf873ae6 ].each do |rev|
-      mock(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
+      double(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
       dont_allow(GitCommitNotifier::Git).describe(rev) { IO.read(FIXTURES_PATH + 'git_describe_' + rev) }
     end
     diff = GitCommitNotifier::DiffToHtml.new
@@ -208,14 +208,14 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should do message mapping" do
-      stub(@diff).do_message_integration("msg") { "msg2" }
-      mock(@diff).do_message_map("msg2") { "msg3" }
+      double(@diff).do_message_integration("msg") { "msg2" }
+      double(@diff).do_message_map("msg2") { "msg3" }
       expect(@diff.message_map("msg")).to eq("msg3")
     end
 
     it "should do message integration" do
-      mock(@diff).do_message_integration("msg") { "msg2" }
-      stub(@diff).do_message_map("msg2") { "msg3" }
+      double(@diff).do_message_integration("msg") { "msg2" }
+      double(@diff).do_message_map("msg2") { "msg3" }
       expect(@diff.message_map("msg")).to eq("msg3")
     end
   end
@@ -227,7 +227,7 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should do nothing unless message_integration config section exists" do
-      mock.proxy(nil).respond_to?(:each_pair)
+      double.proxy(nil).respond_to?(:each_pair)
       dont_allow(@diff).message_replace!
       expect(@diff.do_message_integration('yu')).to eq('yu')
     end
