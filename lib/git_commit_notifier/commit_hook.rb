@@ -45,11 +45,21 @@ module GitCommitNotifier
       end
 
       def add_committer_to_recipient(recipient, committer_email)
-        if email?(committer_email) 
+        if email?(committer_email)
           "#{recipient},#{committer_email}"
         else
           recipient
         end
+      end
+
+      def get_reply_to_address(config, committer_email, recipient)
+        reply_to_address = config["from"]
+        if config["reply_to_author"]
+          reply_to_address = committer_email
+        elsif config["reply_to_mailinglist"]
+          reply_to_address = recipient
+        end
+        reply_to_address
       end
 
       # Gets list of branches from {config} to include into notifications.
@@ -95,15 +105,15 @@ module GitCommitNotifier
       # @return [NilClass] nil
       # @see config
       def run(config_name, rev1, rev2, ref_name)
-      
+
         if @start_time.nil?
           @start_time = Time.new
           @start_time_offset = 0
         end
 
         # Load the configuration
-        if File.exists?(config_name) 
-          @config = YAML::load_file(config_name) 
+        if File.exists?(config_name)
+          @config = YAML::load_file(config_name)
         else
           GitCommitNotifier::CommitHook.info("Unable to find configuration file: #{config_name}")
           @config = {}
@@ -135,15 +145,6 @@ module GitCommitNotifier
         if recipient.nil? || recipient.length == 0
           info("bypassing commit notification; no recipients specified (consider setting git config hooks.mailinglist)")
           return
-        end
-
-        reply_to_address = nil
-        if config["reply_to_author"]
-          reply_to_address ||= result[:commit_info][:email]
-        elsif config["reply_to_mailinglist"]
-          reply_to_address ||= recipient
-        else
-          reply_to_address ||= config["from"]
         end
 
         # Debug information
@@ -226,7 +227,7 @@ module GitCommitNotifier
             :recipient => config["send_mail_to_committer"] ? add_committer_to_recipient(recipient, result[:commit_info][:email]) : recipient,
             :from_address => config["from"] || result[:commit_info][:email],
             :from_alias => result[:commit_info][:author],
-            :reply_to_address => reply_to_address,
+            :reply_to_address => get_reply_to_address(config, result[:commit_info][:email], recipient),
             :subject => subject,
             :commit_date => result[:commit_info][:date],
             :current_date => Time.new.rfc2822,
@@ -254,7 +255,7 @@ module GitCommitNotifier
               :repo_name => repo_name
             )
             webhook.send
-            
+
             @start_time_offset += 1
           end
         else
@@ -277,7 +278,7 @@ module GitCommitNotifier
               :recipient => config["send_mail_to_committer"] ? add_committer_to_recipient(recipient, result[:commit_info][:email]) : recipient,
               :from_address => config["from"] || result[:commit_info][:email],
               :from_alias => result[:commit_info][:author],
-              :reply_to_address => reply_to_address,
+              :reply_to_address => get_reply_to_address(config, result[:commit_info][:email], recipient),
               :subject => subject,
               :commit_date => result[:commit_info][:date],
               :current_date => Time.new.rfc2822,
@@ -287,7 +288,8 @@ module GitCommitNotifier
               :old_rev => rev1,
               :new_rev => rev2,
               :ref_name => ref_name,
-              :repo_name => repo_name
+              :repo_name => repo_name,
+              :message_link => result[:commit_link]
             )
             emailer.send
 
@@ -308,7 +310,7 @@ module GitCommitNotifier
             end
 
             commit_number += 1
-            
+
             @start_time_offset += 1
           end
         end

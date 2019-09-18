@@ -3,14 +3,19 @@
 # Git methods
 class GitCommitNotifier::Git
   class << self
+    def to_utf8(str)
+      return str  unless str.respond_to?(:force_encoding)
+      str.force_encoding(Encoding::UTF_8)
+      str
+    end
+
     # Runs specified command and gets its output.
     # @return (String) Shell command STDOUT (forced to UTF-8)
     # @raise [ArgumentError] when command exits with nonzero status.
     def from_shell(cmd)
       r = `#{cmd}`
       raise ArgumentError.new("#{cmd} failed")  unless $?.exitstatus.zero?
-      r.force_encoding(Encoding::UTF_8) if r.respond_to?(:force_encoding)
-      r
+      to_utf8(r)
     end
 
     # Runs specified command and gets its output as array of lines.
@@ -66,7 +71,7 @@ class GitCommitNotifier::Git
     # @param [String] rev2 Second revision
     def changed_files(rev1, rev2)
       lines = lines_from_shell("git log #{rev1}..#{rev2} --name-status --pretty=oneline -M#{GitCommitNotifier::CommitHook.config['similarity_detection_threshold'] || "0.5"}")
-      lines = lines.select {|line| line =~ /^\w{1}\s+\w+/} # grep out only filenames
+      lines = lines.select { |line| line =~ /^\w{1}\s+\w+/ } # grep out only filenames
       lines.uniq
     end
 

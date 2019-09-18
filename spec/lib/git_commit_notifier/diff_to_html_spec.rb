@@ -11,9 +11,39 @@ describe GitCommitNotifier::DiffToHtml do
     it "should not raise anything and set mode from stats mode" do
       file = Tempfile.new('stattest')
       file.close
-      lambda do
+      expect do
         File.chmod(File.stat(file.path).mode, file.path)
-      end.should_not raise_error
+      end.not_to raise_error
+    end
+  end
+
+  describe :generate_file_link do
+    it "should generate proper url for stash" do
+      diff = GitCommitNotifier::DiffToHtml.new(
+              "link_files" => "stash",
+              "stash" => {
+                "path" => "http://example.com/projects/TEST",
+                "repository" => "TESTREPO"
+              })
+
+      double(GitCommitNotifier::Git).rev_type(REVISIONS[1]) { "commit" }
+      double(GitCommitNotifier::Git).rev_type(REVISIONS[2]) { "commit" }
+      double(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { [REVISIONS[1]] }
+      [REVISIONS[1]].each do |rev|
+        double(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
+        dont_allow(GitCommitNotifier::Git).describe(rev) { IO.read(FIXTURES_PATH + 'git_describe_' + rev) }
+      end
+
+      diff.diff_between_revisions REVISIONS[1], REVISIONS[2], 'testproject', 'refs/heads/master'
+
+      expect(diff.result.size).to eq(1) # one result for each of the commits
+
+      diff.result.each do |html|
+        expect(html).not_to include('@@') # diff correctly processed
+      end
+
+      expect(diff.generate_file_link("x/file1.html")).to \
+        eq("<a href='http://example.com/projects/TEST/repos/TESTREPO/browse/x/file1.html?at=a4629e707d80a5769f7a71ca6ed9471015e14dc9'>x/file1.html</a>")
     end
   end
 
@@ -23,7 +53,7 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should be true if left line numbers are sequential" do
-      @diff_to_html.should be_lines_are_sequential({
+      expect(@diff_to_html).to be_lines_are_sequential({
         :added => 2,
         :removed => 2
       }, {
@@ -33,7 +63,7 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should be true if right line numbers are sequential" do
-      @diff_to_html.should be_lines_are_sequential({
+      expect(@diff_to_html).to be_lines_are_sequential({
         :added => 2,
         :removed => 2
       }, {
@@ -43,7 +73,7 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should be false unless line numbers are sequential" do
-      @diff_to_html.should_not be_lines_are_sequential({
+      expect(@diff_to_html).not_to be_lines_are_sequential({
         :added => 2,
         :removed => 2
       }, {
@@ -53,7 +83,7 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should be true if left line numbers are sequential (right are nil)" do
-      @diff_to_html.should be_lines_are_sequential({
+      expect(@diff_to_html).to be_lines_are_sequential({
         :added => 2,
         :removed => 2
       }, {
@@ -63,7 +93,7 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should be true if right line numbers are sequential (left are nil)" do
-      @diff_to_html.should be_lines_are_sequential({
+      expect(@diff_to_html).to be_lines_are_sequential({
         :added => nil,
         :removed => 2
       }, {
@@ -73,7 +103,7 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should be false unless line numbers are sequential (nils)" do
-      @diff_to_html.should_not be_lines_are_sequential({
+      expect(@diff_to_html).not_to be_lines_are_sequential({
         :added => nil,
         :removed => nil
       }, {
@@ -86,90 +116,90 @@ describe GitCommitNotifier::DiffToHtml do
   describe :unique_commits_per_branch? do
     it "should be false unless specified in config" do
       diff = GitCommitNotifier::DiffToHtml.new
-      diff.should_not be_unique_commits_per_branch
+      expect(diff).not_to be_unique_commits_per_branch
     end
 
     it "should be false if specified as false in config" do
       diff = GitCommitNotifier::DiffToHtml.new({ 'unique_commits_per_branch' => false })
-      diff.should_not be_unique_commits_per_branch
+      expect(diff).not_to be_unique_commits_per_branch
     end
 
     it "should be true if specified as true in config" do
       diff = GitCommitNotifier::DiffToHtml.new({ 'unique_commits_per_branch' => true })
-      diff.should be_unique_commits_per_branch
+      expect(diff).to be_unique_commits_per_branch
     end
   end
 
   it "multiple commits" do
-    mock(GitCommitNotifier::Git).changed_files('7e4f6b4', '4f13525') { [] }
-    mock(GitCommitNotifier::Git).rev_type(REVISIONS.first) { "commit" }
-    mock(GitCommitNotifier::Git).rev_type(REVISIONS.last) { "commit" }
-    mock(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { REVISIONS.reverse }
+    double(GitCommitNotifier::Git).changed_files('7e4f6b4', '4f13525') { [] }
+    double(GitCommitNotifier::Git).rev_type(REVISIONS.first) { "commit" }
+    double(GitCommitNotifier::Git).rev_type(REVISIONS.last) { "commit" }
+    double(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { REVISIONS.reverse }
     REVISIONS.each do |rev|
-      mock(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
+      double(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
       dont_allow(GitCommitNotifier::Git).describe(rev) { IO.read(FIXTURES_PATH + 'git_describe_' + rev) }
     end
 
     diff = GitCommitNotifier::DiffToHtml.new
     diff.diff_between_revisions REVISIONS.first, REVISIONS.last, 'testproject', 'refs/heads/master'
 
-    diff.result.should have(5).commits # one result for each of the commits
+    expect(diff.result.size).to eq(5) # one result for each of the commits
 
     diff.result.each do |html|
-      html.should_not be_include('@@') # diff correctly processed
+      expect(html).not_to include('@@') # diff correctly processed
     end
 
     # second commit - 51b986619d88f7ba98be7d271188785cbbb541a0
     hp = Nokogiri::HTML diff.result[1][:html_content]
-    (hp/"table").should have(3).tables # 3 files updated
+    expect((hp/"table").size).to eq(3) # 3 files updated
     (hp/"table"/"tr"/"td").each do |td|
       if td.inner_html =~ /create_btn/
         cols = td.parent.search('td')
-        ['405', '408', ''].should be_include(cols[0].inner_text) # line 405 changed
+        expect(['405', '408', '']).to include(cols[0].inner_text) # line 405 changed
       end
     end
 
     # third commit - dce6ade4cdc2833b53bd600ef10f9bce83c7102d
     hp = Nokogiri::HTML diff.result[2][:html_content]
-    (hp/"h2").should have(6).headers # 6 files in commit
-    (hp/"table").should have(4).tables # 4 files updated
-    (hp/"h2")[1].inner_text.should == 'Added binary file railties/doc/guides/source/images/icons/callouts/11.png'
-    (hp/"h2")[2].inner_text.should == 'Deleted binary file railties/doc/guides/source/icons/up.png'
-    (hp/"h2")[3].inner_text.should == 'Deleted file railties/doc/guides/source/icons/README'
-    (hp/"h2")[4].inner_text.should == 'Added file railties/doc/guides/source/images/icons/README'
+    expect((hp/"h2").size).to eq(6) # 6 files in commit
+    expect((hp/"table").size).to eq(4) # 4 files updated
+    expect((hp/"h2")[1].inner_text).to eq('Added binary file railties/doc/guides/source/images/icons/callouts/11.png')
+    expect((hp/"h2")[2].inner_text).to eq('Deleted binary file railties/doc/guides/source/icons/up.png')
+    expect((hp/"h2")[3].inner_text).to eq('Deleted file railties/doc/guides/source/icons/README')
+    expect((hp/"h2")[4].inner_text).to eq('Added file railties/doc/guides/source/images/icons/README')
 
     # fourth commit
     hp = Nokogiri::HTML diff.result[3][:html_content]
-    (hp/"table").should have(1).table # 1 file updated
+    expect((hp/"table").size).to eq(1) # 1 file updated
 
     # fifth commit
     hp = Nokogiri::HTML diff.result[4][:html_content]
-    (hp/"table").should have(2).tables # 2 files updated - one table for each of the files
+    expect((hp/"table").size).to eq(2) # 2 files updated - one table for each of the files
     (hp/"table"/"tr"/"td").each do |td|
       if td.inner_html == "require&nbsp;'iconv'"
         # first added line in changeset a4629e707d80a5769f7a71ca6ed9471015e14dc9
-        td.parent.search('td')[0].inner_text.should == '' # left
-        td.parent.search('td')[1].inner_text.should == '2' # right
-        td.parent.search('td')[2].inner_html.should == "require&nbsp;'iconv'" # change
+        expect(td.parent.search('td')[0].inner_text).to eq('') # left
+        expect(td.parent.search('td')[1].inner_text).to eq('2') # right
+        expect(td.parent.search('td')[2].inner_html).to eq("require&nbsp;'iconv'") # change
       end
     end
   end
 
   it "should get good diff when new branch created" do
     first_rev, last_rev = %w[ 0000000000000000000000000000000000000000 ff037a73fc1094455e7bbf506171a3f3cf873ae6 ]
-    mock(GitCommitNotifier::Git).rev_type(first_rev) { "commit" }
-    mock(GitCommitNotifier::Git).rev_type(last_rev) { "commit" }
-    mock(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { [ 'ff037a73fc1094455e7bbf506171a3f3cf873ae6' ] }
+    double(GitCommitNotifier::Git).rev_type(first_rev) { "commit" }
+    double(GitCommitNotifier::Git).rev_type(last_rev) { "commit" }
+    double(GitCommitNotifier::Git).new_commits(anything, anything, anything, anything) { [ 'ff037a73fc1094455e7bbf506171a3f3cf873ae6' ] }
     %w[ ff037a73fc1094455e7bbf506171a3f3cf873ae6 ].each do |rev|
-      mock(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
+      double(GitCommitNotifier::Git).show(rev, :ignore_whitespace => 'all') { IO.read(FIXTURES_PATH + 'git_show_' + rev) }
       dont_allow(GitCommitNotifier::Git).describe(rev) { IO.read(FIXTURES_PATH + 'git_describe_' + rev) }
     end
     diff = GitCommitNotifier::DiffToHtml.new
     diff.diff_between_revisions(first_rev, last_rev, 'tm-admin', 'refs/heads/rvm')
-    diff.result.should have(1).commit
+    expect(diff.result.size).to eq(1)
     hp = Nokogiri::HTML diff.result.first[:html_content]
-    (hp/"table").should have(1).table
-    (hp/"tr.r").should have(1).row
+    expect((hp/"table").size).to eq(1)
+    expect((hp/"tr.r").size).to eq(1)
   end
 
   describe :message_map do
@@ -178,15 +208,15 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should do message mapping" do
-      stub(@diff).do_message_integration("msg") { "msg2" }
-      mock(@diff).do_message_map("msg2") { "msg3" }
-      @diff.message_map("msg").should == "msg3"
+      double(@diff).do_message_integration("msg") { "msg2" }
+      double(@diff).do_message_map("msg2") { "msg3" }
+      expect(@diff.message_map("msg")).to eq("msg3")
     end
 
     it "should do message integration" do
-      mock(@diff).do_message_integration("msg") { "msg2" }
-      stub(@diff).do_message_map("msg2") { "msg3" }
-      @diff.message_map("msg").should == "msg3"
+      double(@diff).do_message_integration("msg") { "msg2" }
+      double(@diff).do_message_map("msg2") { "msg3" }
+      expect(@diff.message_map("msg")).to eq("msg3")
     end
   end
 
@@ -197,16 +227,16 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should do nothing unless message_integration config section exists" do
-      mock.proxy(nil).respond_to?(:each_pair)
+      double.proxy(nil).respond_to?(:each_pair)
       dont_allow(@diff).message_replace!
-      @diff.do_message_integration('yu').should == 'yu'
+      expect(@diff.do_message_integration('yu')).to eq('yu')
     end
     it "should pass MESSAGE_INTEGRATION through message_replace!" do
       @config['message_integration'] = {
         'mediawiki' => 'http://example.com/wiki', # will rework [[text]] to MediaWiki pages
         'redmine' => 'http://redmine.example.com' # will rework refs #123, #125 to Redmine issues
       }
-      @diff.do_message_integration("[[text]] refs #123, #125").should == "<a href=\"http://example.com/wiki/text\">[[text]]</a> refs <a href=\"http://redmine.example.com/issues/123\">#123</a>, <a href=\"http://redmine.example.com/issues/125\">#125</a>"
+      expect(@diff.do_message_integration("[[text]] refs #123, #125")).to eq("<a href=\"http://example.com/wiki/text\">[[text]]</a> refs <a href=\"http://redmine.example.com/issues/123\">#123</a>, <a href=\"http://redmine.example.com/issues/125\">#125</a>")
     end
   end
 
@@ -217,27 +247,27 @@ describe GitCommitNotifier::DiffToHtml do
     end
 
     it "should be false unless skip_commits_older_than set" do
-      @diff_to_html.old_commit?(Hash.new).should be_false
+      expect(@diff_to_html.old_commit?(Hash.new)).to be false
     end
 
     it "should be false if skip_commits_older_than less than zero" do
       @config['skip_commits_older_than'] = '-7'
-      @diff_to_html.old_commit?(Hash.new).should be_false
+      expect(@diff_to_html.old_commit?(Hash.new)).to be false
     end
 
     it "should be false if skip_commits_older_than is equal to zero" do
       @config['skip_commits_older_than'] = 0
-      @diff_to_html.old_commit?(Hash.new).should be_false
+      expect(@diff_to_html.old_commit?(Hash.new)).to be false
     end
 
     it "should be false if commit is newer than required by skip_commits_older_than" do
       @config['skip_commits_older_than'] = 1
-      @diff_to_html.old_commit?({:date => (Time.now - 1).to_s}).should be_false
+      expect(@diff_to_html.old_commit?({:date => (Time.now - 1).to_s})).to be false
     end
 
     it "should be true if commit is older than required by skip_commits_older_than" do
       @config['skip_commits_older_than'] = 1
-      @diff_to_html.old_commit?({:date => (Time.now - 2 * GitCommitNotifier::DiffToHtml::SECS_PER_DAY).to_s}).should be_true
+      expect(@diff_to_html.old_commit?({:date => (Time.now - 2 * GitCommitNotifier::DiffToHtml::SECS_PER_DAY).to_s})).to be_truthy
     end
   end
 end

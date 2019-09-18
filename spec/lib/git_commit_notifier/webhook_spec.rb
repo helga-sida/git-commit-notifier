@@ -7,13 +7,13 @@ require 'git_commit_notifier'
 describe GitCommitNotifier::Emailer do
   describe :new do
     it "should assign config if given" do
-      GitCommitNotifier::Webhook.new({:a => :b}).config[:a].should == :b
+      expect(GitCommitNotifier::Webhook.new({:a => :b}).config[:a]).to eq(:b)
     end
 
     it "should use empty hash unless config given" do
       cfg = GitCommitNotifier::Webhook.new(false).config
-      cfg.should be_kind_of(Hash)
-      cfg.should be_empty
+      expect(cfg).to be_kind_of(Hash)
+      expect(cfg).to be_empty
     end
 
     it "should assign parameters from options" do
@@ -23,7 +23,7 @@ describe GitCommitNotifier::Emailer do
       end
       webhook = GitCommitNotifier::Webhook.new({}, options)
       options.each_pair do |key, value|
-        webhook.instance_variable_get("@#{key}").should == value
+        expect(webhook.instance_variable_get("@#{key}")).to eq(value)
       end
     end
   end
@@ -38,7 +38,7 @@ describe GitCommitNotifier::Emailer do
       options[:committer] = "tester"
       webhook = GitCommitNotifier::Webhook.new({}, options)
       payload = Yajl::Parser.parse(webhook.payload)
-      payload['commits'][0]['committer']['name'].should == "tester"
+      expect(payload['commits'][0]['committer']['name']).to eq("tester")
     end
   end
 

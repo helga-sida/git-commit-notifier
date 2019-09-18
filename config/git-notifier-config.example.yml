@@ -22,6 +22,10 @@ show_summary: true
 # of generated emails. Defaults to true
 # add_plaintext: true
 
+# Put the recepients in the Bcc field. This only applies if the delivery_method
+# is not nntp. Defaults to false
+bcc_recepients: false
+
 # Subject: the subject may be set by specifying a template.
 #
 # Substitution into the template is available for the following
@@ -130,7 +134,7 @@ nntp_settings:
   port: 119
 
 # Decorate files and commit ids with link to a webview. Possible values: none, gitweb,
-# gitorious, cgit, trac, gitlabhq, gitalist, github or redmine
+# gitorious, cgit, trac, gitlabhq, gitalist, github, redmine, or stash
 link_files: none
 
 # If link_files is set to "gitweb", you need to configure the path to your gitweb
@@ -157,6 +161,8 @@ cgit:
 # instance
 trac:
   path: http://example.com/changeset
+# repository: test.git
+# repository defaults to nil (link to trac's default repository)
 
 # If link_files is set to "gitlabhq", you need to configure the path to your gitlabhq
 # instance
@@ -184,6 +190,10 @@ redmine:
 # keywords: [refs, fixes]
 # project defaults to git repository name, keywords defaults to refs, fixes (for use with message_integration)
 
+# if link_files is set to "stash", you need to configure the path to your stash
+# instance
+stash:
+  path: http://stash.example.com
 
 # commit message URL map
 message_map:

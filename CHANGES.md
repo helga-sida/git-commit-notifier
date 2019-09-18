@@ -2,6 +2,21 @@
 
 ## Not yet released
 
+## Version 0.12.10
+
+* Commit metalinks in emails.
+* Show changed filenames with non-ascii characters.
+* Support for Trac with multiple repositories.
+* Support for Stash.
+
+## Version 0.12.5-0.12.6
+
+* Fix behaviour when git output is not utf-8.
+
+## Version 0.12.3
+
+* Links updated for Gitlab 5.x
+
 ## Version 0.12.2
 
 * Restrict `nokogiri` gem version to be lower than 1.6.0 to allow Ruby 1.8.7 installations.

@@ -23,4 +23,12 @@ module GitCommitNotifier::EscapeHelper
   def escape_content(s)
     CGI.escapeHTML(expand_tabs(s, 4)).gsub(" ", "&nbsp;")
   end
+
+  def decode_escaped_filename( filename )
+    filename.gsub( /\\\d\d\d\\\d\d\d/ ) { |match|
+      mb_char_code  = match.split( '\\' )[ 1, 2 ]
+      mb_char_code.map! { |x| x.oct }
+      mb_char_code.pack( 'C*' ).force_encoding( 'UTF-8')
+    }
+  end
 end

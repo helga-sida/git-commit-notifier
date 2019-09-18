@@ -11,16 +11,16 @@ describe GitCommitNotifier::ResultProcessor do
   it :processor do
     processor = GitCommitNotifier::ResultProcessor.new(@diff)
     removal, addition = processor.results
-    removal.should have(1).line
+    expect(removal.size).to eq(1)
 
-    removal.first.should be_include('&nbsp;&nbsp;<span class="rr">b</span>')
-    removal.first.should be_include('<span class="rr">ton</span>')
-    removal.first.split('<span>').should have(1).span # one occurrence (beginning of string)
+    expect(removal.first).to include('&nbsp;&nbsp;<span class="rr">b</span>')
+    expect(removal.first).to include('<span class="rr">ton</span>')
+    expect(removal.first.split('<span>').size).to eq(1) # one occurrence (beginning of string)
 
-    addition.should have(1).line
-    addition.first.should be_include('&nbsp;&nbsp;<span class="aa">s</span>')
-    addition.first.should be_include('<span class="aa">bmi</span>')
-    addition.first.split('<span>').should have(1).span # one occurrence (beginning of string)
+    expect(addition.size).to eq(1)
+    expect(addition.first).to include('&nbsp;&nbsp;<span class="aa">s</span>')
+    expect(addition.first).to include('<span class="aa">bmi</span>')
+    expect(addition.first.split('<span>').size).to eq(1) # one occurrence (beginning of string)
   end
 
   it "processor with almost no common part" do
@@ -35,11 +35,11 @@ describe GitCommitNotifier::ResultProcessor do
     processor = GitCommitNotifier::ResultProcessor.new(@diff)
     removal, addition = processor.results
 
-    removal.should have(1).line
-    removal.first.should == '&nbsp;&nbsp;buttonx' # no highlight
+    expect(removal.size).to eq(1)
+    expect(removal.first).to eq('&nbsp;&nbsp;buttonx') # no highlight
 
-    addition.should have(1).line
-    addition.first.should == '&nbsp;&nbsp;submitx' # no highlight
+    expect(addition.size).to eq(1)
+    expect(addition.first).to eq('&nbsp;&nbsp;submitx') # no highlight
   end
 
   it "close span tag when having difference at the end" do
@@ -60,11 +60,11 @@ describe GitCommitNotifier::ResultProcessor do
     processor = GitCommitNotifier::ResultProcessor.new(diff)
     removal, addition = processor.results
 
-    removal.should have(1).line
-    removal.first.should be_include('action&nbsp;=&gt;<span class="rr">cre</span>')
+    expect(removal.size).to eq(1)
+    expect(removal.first).to include('action&nbsp;=&gt;<span class="rr">cre</span>')
 
-    addition.should have(1).line
-    addition.first.should be_include('action&nbsp;=&gt;<span class="aa">sub</span>')
+    expect(addition.size).to eq(1)
+    expect(addition.first).to include('action&nbsp;=&gt;<span class="aa">sub</span>')
   end
 
   def create_test_input
@@ -95,7 +95,7 @@ describe GitCommitNotifier::ResultProcessor do
   describe :length_in_chars do
     it "should be unicode friendly" do
       processor = GitCommitNotifier::ResultProcessor.new(@diff)
-      processor.length_in_chars([{ :token => 'японская мама' }]).should == 13
+      expect(processor.length_in_chars([{ :token => 'японская мама' }])).to eq(13)
     end
   end
 end

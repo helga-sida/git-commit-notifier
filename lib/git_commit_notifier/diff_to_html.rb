@@ -58,6 +58,14 @@ module GitCommitNotifier
       end
     end
 
+    def to_utf8_strict(str)
+      return str  unless str.respond_to?(:force_encoding)
+      str = str.force_encoding(Encoding::UTF_8)
+      return str  if str.valid_encoding?
+      str = str.force_encoding(Encoding::BINARY)
+      str.encode("UTF-8", :invalid => :replace, :undef => :replace)
+    end
+
     def range_info(range)
       matches = range.match(/^@@ \-(\S+) \+(\S+)/)
       matches[1..2].map { |m| m.split(',')[0].to_i }
@@ -204,18 +212,41 @@ module GitCommitNotifier
       # TODO: these filenames, etc, should likely be properly html escaped
       file_link = file_name
       if config['link_files'] && !@file_removed
+        file_link = generate_file_link(file_name)
+      end
+
+      if show_summary?
+        @file_changes << {
+          :file_name => file_name,
+          :text => "#{op} #{binary}file #{file_name}",
+        }
+      end
+
+      "<a name=\"#{file_name}\"></a><h2>#{op} #{binary}file #{file_link}</h2>\n"
+    end
+
+    def generate_file_link(file_name)
+      if config['link_files'] && !@file_removed
         file_link = if config["link_files"] == "gitweb" && config["gitweb"]
           "<a href='#{config['gitweb']['path']}?p=#{config['gitweb']['project'] || "#{Git.repo_name}.git"};f=#{file_name};h=#{@current_sha};hb=#{@current_commit}'>#{file_name}</a>"
         elsif config["link_files"] == "gitorious" && config["gitorious"]
           "<a href='#{config['gitorious']['path']}/#{config['gitorious']['project']}/#{config['gitorious']['repository']}/blobs/#{branch_name}/#{file_name}'>#{file_name}</a>"
         elsif config["link_files"] == "trac" && config["trac"]
-          "<a href='#{config['trac']['path']}/#{@current_commit}/#{file_name}'>#{file_name}</a>"
+          if config["trac"]["repository"]
+            "<a href='#{config['trac']['path']}/#{@current_commit}/#{config['trac']['repository']}/#{file_name}'>#{file_name}</a>"
+          else
+            "<a href='#{config['trac']['path']}/#{@current_commit}/#{file_name}'>#{file_name}</a>"
+          end
+        elsif config["link_files"] == "stash" && config["stash"]
+          "<a href='#{config['stash']['path']}/repos/#{config['stash']['repository']}/browse/#{file_name}?at=#{@current_commit}'>#{file_name}</a>"
         elsif config["link_files"] == "cgit" && config["cgit"]
           "<a href='#{config['cgit']['path']}/#{config['cgit']['project'] || "#{Git.repo_name_real}"}/tree/#{file_name}?h=#{branch_name}'>#{file_name}</a>"
         elsif config["link_files"] == "gitlabhq" && config["gitlabhq"]
-          if config["gitlabhq"]["version"] && config["gitlabhq"]["version"] < 1.2
+          if config["gitlabhq"]["version"] && config["gitlabhq"]["version"].to_f < 1.2
             "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name.gsub(".", "_")}/tree/#{@current_commit}/#{file_name}'>#{file_name}</a>"
-          elsif config["gitlabhq"]["version"] && config["gitlabhq"]["version"] >= 4.0
+          elsif config["gitlabhq"]["version"] && config["gitlabhq"]["version"].to_f >= 5.0
+            "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name_with_parent.gsub(".", "_")}/blob/#{@current_commit}/#{file_name}'>#{file_name}</a>"
+          elsif config["gitlabhq"]["version"] && config["gitlabhq"]["version"].to_f >= 4.0
             "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name_with_parent.gsub(".", "_")}/commit/#{@current_commit}'>#{file_name}</a>"
           else
             "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name.gsub(".", "_")}/#{@current_commit}/tree/#{file_name}'>#{file_name}</a>"
@@ -230,15 +261,6 @@ module GitCommitNotifier
           file_name
         end
       end
-
-      if show_summary?
-        @file_changes << {
-          :file_name => file_name, 
-          :text => "#{op} #{binary}file #{file_name}",
-        }
-      end
-
-      "<a name=\"#{file_name}\"></a><h2>#{op} #{binary}file #{file_link}</h2>\n"
     end
 
     # Determines are two lines are sequentially placed in diff (no skipped lines between).
@@ -266,7 +288,7 @@ module GitCommitNotifier
         if @file_renamed
           @diff_result << "<tr class='renamed'>\n<td class='ln'>&nbsp;</td><td class='ln'></td><td>&nbsp;<u>#{@file_renamed_old_name}</u> was renamed to <u>#{@file_renamed_new_name}</u></td></tr>"
         end
-       
+
         removals = []
         additions = []
 
@@ -314,6 +336,7 @@ module GitCommitNotifier
       @binary = false
     end
 
+    RE_DIFF_FILE_NAME_ESCAPED = /^diff --git "a\/(.*)" "?b\//
     RE_DIFF_FILE_NAME = /^diff\s\-\-git\sa\/(.*)\sb\//
     RE_DIFF_SHA       = /^index [0-9a-fA-F]+\.\.([0-9a-fA-F]+)/
 
@@ -343,6 +366,10 @@ module GitCommitNotifier
         case line
         when RE_DIFF_FILE_NAME then
           file_name = $1
+          add_changes_to_result
+          @current_file_name = file_name
+        when RE_DIFF_FILE_NAME_ESCAPED then
+          file_name = decode_escaped_filename( $1 )
           add_changes_to_result
           @current_file_name = file_name
         when RE_DIFF_SHA then
@@ -451,6 +478,10 @@ module GitCommitNotifier
       end
       result[:message] = message
 
+      result.each_key do |key|
+        result[key] = to_utf8_strict result[key]
+      end
+
       result
     end
 
@@ -533,10 +564,21 @@ module GitCommitNotifier
     COMMIT_LINK_MAP = {
       :gitweb    => lambda { |config, commit| "<a href='#{config['gitweb']['path']}?p=#{config['gitweb']['project'] || "#{Git.repo_name}.git"};a=commitdiff;h=#{commit}'>#{commit}</a>" },
       :gitorious => lambda { |config, commit| "<a href='#{config['gitorious']['path']}/#{config['gitorious']['project']}/#{config['gitorious']['repository']}/commit/#{commit}'>#{commit}</a>" },
-      :trac      => lambda { |config, commit| "<a href='#{config['trac']['path']}/#{commit}'>#{commit}</a>" },
+      :trac      => lambda { |config, commit|
+        if config['trac']['repository']
+          "<a href='#{config['trac']['path']}/#{commit}/#{config['trac']['repository']}'>#{commit}</a>"
+        else
+          "<a href='#{config['trac']['path']}/#{commit}'>#{commit}</a>"
+        end
+      },
+      :stash     => lambda { |config, commit|
+        "<a href='#{config['stash']['path']}/repos/#{config['stash']['repository']}/commits/#{commit}'>#{commit}</a>"
+      },
       :cgit      => lambda { |config, commit| "<a href='#{config['cgit']['path']}/#{config['cgit']['project'] || "#{Git.repo_name_real}"}/commit/?id=#{commit}'>#{commit}</a>" },
       :gitlabhq  => lambda { |config, commit|
-        if config['gitlabhq']['version'] >= 4.0
+        if config['gitlabhq']['version'] && config['gitlabhq']['version'].to_f >= 5.0
+          "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name_with_parent.gsub(".", "_")}/commit/#{commit}'>#{commit}</a>"
+        elsif config['gitlabhq']['version'] && config['gitlabhq']['version'].to_f >= 4.0
           "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name_with_parent.gsub(".", "_")}/commits/#{commit}'>#{commit}</a>"
         else
           "<a href='#{config['gitlabhq']['path']}/#{Git.repo_name.gsub(".", "_")}/commits/#{commit}'>#{commit}</a>"
@@ -557,6 +599,11 @@ module GitCommitNotifier
       mode = :default  unless config.has_key?(mode.to_s)
       mode = :default  unless COMMIT_LINK_MAP.has_key?(mode)
       COMMIT_LINK_MAP[mode].call(config, commit)
+    end
+
+    def extract_link(a_tag)
+      m = /href\s*=\s*["']([^"']+)["']/i.match(a_tag)
+      m && m[1]
     end
 
     def diff_for_commit(commit)
@@ -587,8 +634,9 @@ module GitCommitNotifier
         changed_files = "Changed files:\n\n#{changed_file_list.uniq.join()}\n"
       end
 
+      commit_link = markup_commit_for_html(commit_info[:commit])
       title = "<dl class=\"title\">"
-      title += "<dt>Commit</dt><dd>#{markup_commit_for_html(commit_info[:commit])}</dd>\n"
+      title += "<dt>Commit</dt><dd>#{commit_link}</dd>\n"
       title += "<dt>Branch</dt><dd>#{CGI.escapeHTML(branch_name)}</dd>\n" if branch_name
 
       title += "<dt>Author</dt><dd>#{CGI.escapeHTML(commit_info[:author])} &lt;#{commit_info[:email]}&gt;</dd>\n"
@@ -634,7 +682,8 @@ module GitCommitNotifier
       {
         :commit_info  => commit_info,
         :html_content => html,
-        :text_content => text
+        :text_content => text,
+        :commit_link  => extract_link( commit_link ),
       }
     end
 
@@ -642,11 +691,12 @@ module GitCommitNotifier
 
       if change_type == :delete
         message = "Remove Lightweight Tag #{tag}"
+        commit_link = markup_commit_for_html(rev)
 
         html = "<dl class='title'>"
         html += "<dt>Tag</dt><dd>#{CGI.escapeHTML(tag)} (removed)</dd>\n"
         html += "<dt>Type</dt><dd>lightweight</dd>\n"
-        html += "<dt>Commit</dt><dd>#{markup_commit_for_html(rev)}</dd>\n"
+        html += "<dt>Commit</dt><dd>#{commit_link}</dd>\n"
         html += "</dl>"
 
         text = "Remove Tag: #{tag}\n"
@@ -674,7 +724,8 @@ module GitCommitNotifier
       @result << {
         :commit_info => commit_info,
         :html_content => html,
-        :text_content => text
+        :text_content => text,
+        :commit_link => extract_link( commit_link )
       }
     end
 
@@ -698,11 +749,12 @@ module GitCommitNotifier
         tag_info = Git.tag_info(ref_name)
 
         message = tag_info[:subject] || "#{change_type == :create ? "Add" : "Update"} Annotated Tag #{tag}"
+        commit_link = markup_commit_for_html(tag_info[:tagobject])
 
         html = "<dl class='title'>"
         html += "<dt>Tag</dt><dd>#{CGI.escapeHTML(tag)} (#{change_type == :create ? "added" : "updated"})</dd>\n"
         html += "<dt>Type</dt><dd>annotated</dd>\n"
-        html += "<dt>Commit</dt><dd>#{markup_commit_for_html(tag_info[:tagobject])}</dd>\n"
+        html += "<dt>Commit</dt><dd>#{commit_link}</dd>\n"
         html += "<dt>Tagger</dt><dd>#{CGI.escapeHTML(tag_info[:taggername])} #{CGI.escapeHTML(tag_info[:taggeremail])}</dd>\n"
 
         message_array = tag_info[:contents].split("\n")
@@ -712,7 +764,7 @@ module GitCommitNotifier
         if config['show_a_shortlog_of_commits_since_the_last_annotated_tag']
           list_of_commits_in_between = Git.list_of_commits_between_current_commit_and_last_tag(ref_name, tag_info[:tagobject])
           if list_of_commits_in_between.length > 0
-            html += "<dt><br/>Commits since the last annotated tag</dt><dd><br/><br/><ul>"                    
+            html += "<dt><br/>Commits since the last annotated tag</dt><dd><br/><br/><ul>"
             list_of_commits_in_between.each do |commit|
               if config['link_files'].to_s != "none"
                 l = markup_commit_for_html(commit[0])
@@ -738,9 +790,10 @@ module GitCommitNotifier
       end
 
       @result << {
-        :commit_info => commit_info,
+        :commit_info  => commit_info,
         :html_content => html,
-        :text_content => text
+        :text_content => text,
+        :commit_link  => extract_link( commit_link )
       }
     end
 
@@ -755,10 +808,10 @@ module GitCommitNotifier
         # The flag unique_to_current_branch passed to new_commits means the
         # opposite: "consider only commits that are unique to this branch"
 
-       	# Note :: In case of creation of a new branch, the oldrev passed by git 
-       	# to the post-receive hook is 00000... which causes the git commit notifier 
-       	# to send out notifications for ALL commits in the repository. Hence we force 
-       	# the "unique_commits_per_branch" config to "true" in such cases, and in other 
+       	# Note :: In case of creation of a new branch, the oldrev passed by git
+       	# to the post-receive hook is 00000... which causes the git commit notifier
+       	# to send out notifications for ALL commits in the repository. Hence we force
+       	# the "unique_commits_per_branch" config to "true" in such cases, and in other
        	# cases, we consider the value from the config file
         if oldrev =~ /^0+$/
           Git.new_commits(oldrev, newrev, ref_name, true)

@@ -9,7 +9,24 @@ class GitCommitNotifier::Emailer
   # Default ERB template file path
   TEMPLATE = File.join(File.dirname(__FILE__), *'../../template/email.html.erb'.split('/')).freeze
   # Instance variable names
-  PARAMETERS = %w[project_path recipient from_address from_alias reply_to_address commit_date current_date offset_date subject text_message html_message repo_name ref_name old_rev new_rev].freeze
+  PARAMETERS = %w[
+    project_path
+    recipient
+    from_address
+    from_alias
+    reply_to_address
+    commit_date
+    current_date
+    offset_date
+    subject
+    text_message
+    html_message
+    repo_name
+    ref_name
+    old_rev
+    new_rev
+    message_link
+  ].freeze
 
   # Gets config.
   # @return [Hash] Configuration
@@ -203,6 +220,13 @@ class GitCommitNotifier::Emailer
     #date = @current_date   # Date we processed this commit
     date = @offset_date     # Date notifier started, plus 1 second per commit processed
     date = Time.new.rfc2822 if date.nil?    # Fallback to current date if date is nil
+
+    # Check if the recepients are set to be sent via Bcc and set the To to the commit
+    # author
+    if config['bcc_recepients'] && config['delivery_method'] != 'nntp'
+      content << "To: #{from}"
+      to_tag = 'Bcc'
+    end
 
     content.concat [
         "#{to_tag}: #{quote_if_necessary(@recipient, 'utf-8')}",
